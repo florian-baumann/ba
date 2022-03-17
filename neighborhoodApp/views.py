@@ -9,6 +9,7 @@ from .models import Users
 from .geohash import *
 
 
+
 # #filters all users with same location-Fields
 # def simil(form):
 #     curr_loc = form.data['location'] #https://stackoverflow.com/questions/43014771/django-form-object-has-no-attribute-error
