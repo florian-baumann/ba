@@ -9,6 +9,7 @@ from dateutil import parser
 # geohash = SourceFileLoader('geohash', '.geohash.py').load_module()
 
 from .geohash import *
+from .config import *
 
 
 
@@ -174,8 +175,15 @@ def index(request):
         #print POSt request
         #print(request.POST)
 
-        # speichere Geohash List in DB
-        form.data['geohashList'] = calculate_Area(form.data['geohash'], int(form.data['neighberhood_layers']))
+        #check if entered geohash is the correct length. If not shorten it or None
+        if geohash_length <= len(form.data['geohash']):
+            form.data['geohash'] = form.data['geohash'][0:(geohash_length)]
+        else :
+            form.data['geohash'] = None
+
+
+        # berechne und speichere Geohash List in DB
+        form.data['geohashList'] = calculate_Area(form.data['geohash'], neighberhood_layers) 
 
         # berechne expire time point
         form.data['expire_at'] = datetime.now() + timedelta(hours= int(form.data['expire']))

@@ -22,8 +22,8 @@ class Users(models.Model):
     longitude = models.IntegerField(default=0)
     latitude = models.IntegerField(default=0)
     geohash = models.CharField(default=0, max_length=30)
-    geohash_length = models.IntegerField(default=6)
-    neighberhood_layers = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(10), MinValueValidator(0)])
+    #geohash_length = models.IntegerField(default=6)
+    #neighberhood_layers = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(10), MinValueValidator(0)])
 
     geohashList = JSONField(default=defaultGeohashList)
 
