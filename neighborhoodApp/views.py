@@ -2,6 +2,8 @@
 from django.shortcuts import redirect, render, HttpResponse
 from .forms import UserForm
 from .models import Users
+from datetime import datetime, timedelta
+from dateutil import parser
 
 # from importlib.machinery import SourceFileLoader
 # geohash = SourceFileLoader('geohash', '.geohash.py').load_module()
@@ -109,9 +111,9 @@ def calculate_Area(geohash, neighberhood_layers):
     # filtere alle Duplikate aus GeohashListe 
     geohashListFiltered = filterDiplicates(geohashList)
 
-    print("---------- final:")
+    print("final calculated inner area of request:")
     print(geohashListFiltered)
-    print("länge:", len(geohashListFiltered))
+    print("size of calculated geohash array:", len(geohashListFiltered))
     return geohashListFiltered
 
 #   calculate_Area("7gxyru", 2)
@@ -131,15 +133,12 @@ def calculateOverlap(geohashList1, geohashList2):
     #überprüfe ob Länge der Listen und Länge der Geohashes gleich ist, wenn nicht gebe Error
     if len(geohashList1) == len(geohashList2) and len(geohashList1[0]) == len(geohashList2[0]):
         
-
         for geohash in geohashList1:
             overlapNumber += geohashList2.count(geohash)
-            #print("for: ", overlapNumber)
-
-        
+            #print("for: ", overlapNumber)      
 
         overlapPercentage = int(overlapNumber/len(geohashList1) * 100)
-        print("--------- final overlap:", overlapPercentage)
+        print(">>> final coverage:", overlapPercentage)
 
         return overlapPercentage
     else:
@@ -150,7 +149,12 @@ def calculateOverlap(geohashList1, geohashList2):
 #   33
 
 
-
+# checks if db entry is expired
+def checkExpiration(user):
+    print("check expiration:", user)
+    if user.expire_at.timestamp() < datetime.now().timestamp():
+        print("expired user deleted: ", user)
+        user.delete()
 
 
 
@@ -162,27 +166,51 @@ def index(request):
     all_users = Users.objects.all()
     neighbors = []
 
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< new request >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+
     if request.method == "POST":
         form = UserForm(request.POST)
-        #print(request.POST.get(geohash))
+
+        #print POSt request
+        #print(request.POST)
 
         # speichere Geohash List in DB
         form.data['geohashList'] = calculate_Area(form.data['geohash'], int(form.data['neighberhood_layers']))
 
+        # berechne expire time point
+        form.data['expire_at'] = datetime.now() + timedelta(hours= int(form.data['expire']))
+        print("new user entry expire_at", form.data['expire_at']) 
+
         if form.is_valid():
-            form.save()
+            
             
             #https://stackoverflow.com/questions/49275868/how-to-filter-json-array-in-django-jsonfield
             #neighbors = Users.objects.filter(calculateOverlap(form.data['geohashList'], [self.geohashList]))
 
             for curr_user in Users.objects.all():
-                print(curr_user)
+                print(">>>>>>>>>>> compare to user:", curr_user)
+
+                checkExpiration(curr_user)
+
                 print(curr_user.geohashList)
-                if calculateOverlap(curr_user.geohashList, form.cleaned_data['geohashList']) > 33:
-                    neighbors.append(curr_user)
+                if calculateOverlap(curr_user.geohashList, form.cleaned_data['geohashList']) > 33 :
+                    #nutzer nict sich selbst zurückgeben
+                    if curr_user.mail != form.data['mail']: 
+                        neighbors.append(curr_user)
+
+                # remove duplicates with same mail - only one entry per mail adress allowed
+                if curr_user.mail == form.data['mail'] :
+                    curr_user.delete()
+
+                
+
+            form.save()
+            print('<<<< form saved')
+
+
 
             #print(all_users)
-            print("---------- neighbours: ", neighbors)
+            print(">>>>>>>>>>> final neighbours: ", neighbors)
 
 
             return render(request, "answer.html", {"users": neighbors})

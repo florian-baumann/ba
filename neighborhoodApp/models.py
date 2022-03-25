@@ -1,18 +1,23 @@
 from django.db import models
 from django.core.validators import *
 from django.db.models import JSONField
+import datetime
 
 #from geohash import *
 
 # Create your models here.
 
+#defalt is 1day in the future
+def defaultExpireAt():
+    return datetime.datetime.now() + datetime.timedelta(hours=1)
+
 def defaultGeohashList():
     return {"geohashList": ["default"]}
 
 class Users(models.Model):
-    mail=models.CharField(max_length=30)
+    mail = models.CharField(max_length=30)
     expire = models.PositiveSmallIntegerField(default=24, validators=[MaxValueValidator(720), MinValueValidator(1)]) #in hours
-    last_change = models.DateTimeField(auto_now=True)
+    expire_at = models.DateTimeField(default = datetime.datetime.now(), null=True)
 
     longitude = models.IntegerField(default=0)
     latitude = models.IntegerField(default=0)

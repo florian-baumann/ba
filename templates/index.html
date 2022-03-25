@@ -10,13 +10,14 @@ Tasks -
 {% block content %}
    
     <form method="post">
-    {% csrf_token %} <!-- token to avoid cross-site request forgery (CSRF) attacks -->
+        {% csrf_token %} <!-- token to avoid cross-site request forgery (CSRF) attacks -->
         
-        <h1>Add new Position</h1>
+        <h1>Add New Position/ Update Position</h1>
         </br>
 
+        
         mail: {{user_form.mail}} </br>
-        expire in (hours): {{user_form.expire}} </br>
+        expire (in hours) (1-720): {{user_form.expire}} </br>
         geohash Length (6-9): {{user_form.geohash_length}} </br>
         geohash neighberhood Layers (1-3): {{user_form.neighberhood_layers}} </br>
         either: </br>
@@ -24,6 +25,9 @@ Tasks -
         latitude: {{user_form.latitude}} </br>
         or: </br>
         geohash: {{user_form.geohash}} </br>
+
+        <!--{{user_form.as_p}}-->
+
         <button type="submit">SUBMIT</button>
     </form>
 
