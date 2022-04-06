@@ -1,0 +1,10 @@
+{% block content %}
+    {% csrf_token %} <!-- token to avoid cross-site request forgery (CSRF) attacks -->
+    </br>
+    </br>
+<h1> Error: </h1>
+{{error_msg}}    
+
+
+
+{% endblock content %}

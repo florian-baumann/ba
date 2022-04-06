@@ -3,10 +3,12 @@
 Copyright (C) 2009 Hiroaki Kawai <kawai@iij.ad.jp>
 https://github.com/hkwi/python-geohash
 """
-try:
-	import geohash
-except ImportError:
-	_geohash = None
+# try:
+# 	import geohash
+# except ImportError:
+# 	_geohash = None
+
+_geohash = None
 
 __version__ = "0.8.5"
 __all__ = ['encode','decode','decode_exactly','bbox', 'neighbors', 'expand']

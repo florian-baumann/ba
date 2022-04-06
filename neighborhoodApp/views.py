@@ -5,78 +5,69 @@ from .models import Users
 from datetime import datetime, timedelta
 from dateutil import parser
 
-# from importlib.machinery import SourceFileLoader
-# geohash = SourceFileLoader('geohash', '.geohash.py').load_module()
 
+# module with tools for working with geohashes (https://github.com/hkwi/python-geohash)
 from .geohash import *
+
+
+# config file
 from .config import *
 
 
 
-# #filters all users with same location-Fields
-# def simil(form):
-#     curr_loc = form.data['location'] #https://stackoverflow.com/questions/43014771/django-form-object-has-no-attribute-error
-#     # # print(curr_loc)
-#     # # print(type(curr_loc))
-#     # # curr_loc = "berlin"
-#     # print(curr_loc)
-#     # print(type(curr_loc))
-#     temp = Users.objects.filter(location=curr_loc)
-#     # print(temp)
-#     #temp = Users.objects.filter(location=form.data['location'])
-#     return temp
-
-# renders index.html & receive form input & redirection to answers.html with values from the form 
-# def index(request):
-    
-#     form = UserForm()
-#     if request.method == "POST":
-#         form = UserForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-            
-#             return render(request, "answer.html", {"users": simil(form)})
-
-#     all_users = Users.objects.all()
-#     return render(request, "index.html", {"user_form": form, "all_users": all_users})
-
-
-# #renders answers.html
-# def answer(request):
-
-#     return render(request, "answer.html")
-
-# -------------------------------------------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------------------------------------------
-
-
-
 def latlongToGeohash(latitude, longitude, precicion):
-    return encode(latitude,longitude, precicion)
+# encodes longtude latitude coordinates to a Geohash with given length
+# input1: latitude      string         latitude value
+# input2: longitude     string         longitude value
+# input3: precicion     int         geohash length
+# return:               string      the corresponding geohash
+
+    return encode(float(latitude),float(longitude), precicion)
 
 
-#   https://stackabuse.com/python-how-to-flatten-list-of-lists/
+
 def flattenList(list_of_lists):
+# flattens a given list of lists
+# input: list_of_lists      [[string]]      list of lists with a depth of maximum 4
+# return:                   [string]
+
+# example:
+# flattenList(["hello", ["abcd"],["edf"]])
+# --> ["hello", "abcd","edf"]
+
+
     if len(list_of_lists) == 0:
         return list_of_lists
     if isinstance(list_of_lists[0], list):
         return flattenList(list_of_lists[0]) + flattenList(list_of_lists[1:])
     return list_of_lists[:1] + flattenList(list_of_lists[1:])
-#   print("---------- faltlist")
-#   print(flattenList(["hello", ["abcd"],["edf"]]))
+
 
 
 def filterDiplicates(List):
-    return list(set(List))
-#   print("---------- filterDuplicates")
-#   print(filterDiplicates(["hello", "hello", "hash", "hello"]))
-    
+#   filters removes duplicates from a list
+#   input:list   [string]       the input list
+#   return:      [string]       filtered list
 
-#   input1: Geohash                initialer geohash" "in der Mitte"
-#   input2: neighberhood_layers    Anzahl an Geohash Schichten um Geohash
-#   output:                        List aller Geohashes um input1 Geohash herum ohne Duplicate
-#   achtung! bisher nur maximal neighberhood_layers = 3
+# Example:
+#filterDiplicates(["hello", "hello", "hash", "hello"])
+# --> ["hello", "hello", "hash"]
+
+    return list(set(List))
+
+
+
 def calculate_Area(geohash, neighberhood_layers):
+    #   input1: geohash                string                       inner Geohash
+    #   input2: neighberhood_layers    int in the range [0, 3]      number of layers around the geohash for the number of Geohashes in the neighbourhood area(NA) (input-> number of geohashes in NA; 0->1; 1->9; 2->25; 4->36)
+    #   return:                        [string]                     List aller Geohashes um input1 Geohash herum ohne Duplicate
+    
+    # Example:
+    # calculate_Area("7gxyru", 2)
+    # --> ['7gxyrq', 'k58n2n', 'k58n27', '7gxyrs', 'k58n2k', '7gxyru', 'k58n2m', '7gxyrv', '7gxyry', '7gxyrf',
+    #  'k58n24', '7gxyrt', 'k58n25', '7gxyr6', '7gxyrg', '7gxyrm', '7gxyrk', '7gxyr7', 'k58n2q', 'k58n26',
+    #  'k58n2j', '7gxyrw', 'k58n2h', '7gxyre', '7gxyrd']
+    
     geohashList = []
     geohashList.append(geohash)     #initialen Geohash hinzufügen
     index = 0
@@ -86,7 +77,7 @@ def calculate_Area(geohash, neighberhood_layers):
     #     #geohashList.append(geohash)
     #     index = index+1
     #     #print("tets", geohashList)
-    #   enn keine Layers dann gib initialen geohash wieder zurück
+    #   wenn keine Layers dann gib initialen geohash wieder zurück
     if neighberhood_layers == 0:
         return geohashList
     #   iteriere sooft wie neighberhood_Layers gefordert werden   
@@ -117,18 +108,17 @@ def calculate_Area(geohash, neighberhood_layers):
     print("size of calculated geohash array:", len(geohashListFiltered))
     return geohashListFiltered
 
-#   calculate_Area("7gxyru", 2)
-#   -->
-#---------- final:
-# ['7gxyrq', 'k58n2n', 'k58n27', '7gxyrs', 'k58n2k', '7gxyru', 'k58n2m', '7gxyrv', '7gxyry', '7gxyrf',
-#  'k58n24', '7gxyrt', 'k58n25', '7gxyr6', '7gxyrg', '7gxyrm', '7gxyrk', '7gxyr7', 'k58n2q', 'k58n26',
-#  'k58n2j', '7gxyrw', 'k58n2h', '7gxyre', '7gxyrd']
-# länge: 25
+ 
 
-
-#   input1&2:      List of Geohashes, smae Length & Geohash length
-#   return:        Prozentsatz(0-100) Integer der gleichen Elemente in geohashListe1&2 
 def calculateOverlap(geohashList1, geohashList2):
+#   input1&2:      [string]     List of Geohashes: same List length & Geohash length
+#   return:        int          percentage of similar entries 
+
+#   Example:
+#   calculateOverlap(['7gxyrs', '7gxyrv', '7gxyru', 'k58n24', 'k58n2j', 'helo'], ['k58n2j', 'k58n2m', '7gxyrv', '7gxyrk', 'k58n25', 'hello'])
+#   --> 33
+ 
+    
     overlapNumber = 0
 
     #überprüfe ob Länge der Listen und Länge der Geohashes gleich ist, wenn nicht gebe Error
@@ -145,13 +135,13 @@ def calculateOverlap(geohashList1, geohashList2):
     else:
         return -1
 
-#   calculateOverlap(['7gxyrs', '7gxyrv', '7gxyru', 'k58n24', 'k58n2j', 'helo'], ['k58n2j', 'k58n2m', '7gxyrv', '7gxyrk', 'k58n25', 'hello'])
-#   --> 
-#   33
 
 
-# checks if db entry is expired
+
 def checkExpiration(user):
+#   checks if a database entry is expired and delets it if it is expired
+#   imput user:     user object
+
     print("check expiration:", user)
     if user.expire_at.timestamp() < datetime.now().timestamp():
         print("expired user deleted: ", user)
@@ -159,50 +149,56 @@ def checkExpiration(user):
 
 
 
-
-# renders index.html & receive form input & redirection to answers.html with values from the form 
 def index(request):
+#   renders index.html & receive form input & redirection to answers.html/error.html
+
     request.POST._mutable = True
     form = UserForm()
     all_users = Users.objects.all()
     neighbors = []
 
-    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< new request >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    #print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< new request >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
     if request.method == "POST":
         form = UserForm(request.POST)
 
-        #print POSt request
-        #print(request.POST)
 
-        #check if entered geohash is the correct length. If not shorten it or None
+        #checks if longitude and latitude coordinates are given, if yes encode it to geohash and remove values
+        # if form.data['longitude']!=0 and form.data['latitude']!=0:
+        #     form.data['geohash'] = latlongToGeohash(form.data['longitude'], form.data['latitude'], geohash_length)
+        #     form.data['longitude'] = 0
+        #     form.data['latitude'] = 0
+
+        
+
+        #check if entered geohash is the correct length. If not shorten it
         if geohash_length <= len(form.data['geohash']):
             form.data['geohash'] = form.data['geohash'][0:(geohash_length)]
-        else :
-            form.data['geohash'] = None
 
+        
 
-        # berechne und speichere Geohash List in DB
+        # calculate the neigbourhood area Geohash list and save it to the database
         form.data['geohashList'] = calculate_Area(form.data['geohash'], neighberhood_layers) 
 
-        # berechne expire time point
+        # calculate the expiration time point
         form.data['expire_at'] = datetime.now() + timedelta(hours= int(form.data['expire']))
-        print("new user entry expire_at", form.data['expire_at']) 
+        form.data['expire'] = 0
+        #print("new user entry expire_at", form.data['expire_at']) 
+
+   
 
         if form.is_valid():
-            
-            
-            #https://stackoverflow.com/questions/49275868/how-to-filter-json-array-in-django-jsonfield
-            #neighbors = Users.objects.filter(calculateOverlap(form.data['geohashList'], [self.geohashList]))
 
+            #iterate over all database entries to chack expiration and determine neighbors
             for curr_user in Users.objects.all():
                 print(">>>>>>>>>>> compare to user:", curr_user)
 
                 checkExpiration(curr_user)
 
                 print(curr_user.geohashList)
-                if calculateOverlap(curr_user.geohashList, form.cleaned_data['geohashList']) > 33 :
-                    #nutzer nict sich selbst zurückgeben
+                if calculateOverlap(curr_user.geohashList, form.cleaned_data['geohashList']) > threshold :
+                    
+                    #preventing users are their own neigbour
                     if curr_user.mail != form.data['mail']: 
                         neighbors.append(curr_user)
 
@@ -213,21 +209,25 @@ def index(request):
                 
 
             form.save()
-            print('<<<< form saved')
+            #print('<<<< form saved')
 
 
 
             #print(all_users)
-            print(">>>>>>>>>>> final neighbours: ", neighbors)
+            #print(">>>>>>>>>>> final neighbours: ", neighbors)
 
 
             return render(request, "answer.html", {"users": neighbors})
         else:
-            print(">>>> Form invalid")
+            #print(">>>> Form invalid")
             print(form.errors)
+            error_msg = ""
+            return render(request, "error.html", {"error_msg": form.errors})
 
-    all_users = Users.objects.all()
-    return render(request, "index.html", {"user_form": form, "all_users": all_users})
+    #all_users = Users.objects.all()
+    #return render(request, "index.html", {"user_form": form, "all_users": all_users})
+    return render(request, "index.html", {"user_form": form})
+
 
 
 #renders answers.html
